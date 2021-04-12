@@ -37,6 +37,7 @@ class App extends React.Component {
     this.setState({sentiment:true});
     let ret = "";
     let url = ".";
+    //let url = "http://localhost:8080";
 
     if(this.state.mode === "url") {
       url = url+"/url/sentiment?url="+document.getElementById("textinput").value;
@@ -45,17 +46,21 @@ class App extends React.Component {
     }
     ret = axios.get(url);
     ret.then((response)=>{
-
-      //Include code here to check the sentiment and fomrat the data accordingly
-
-      this.setState({sentimentOutput:response.data});
-      let output = response.data;
-      if(response.data === "positive") {
-        output = <div style={{color:"green",fontSize:20}}>{response.data}</div>
-      } else if (response.data === "negative"){
-        output = <div style={{color:"red",fontSize:20}}>{response.data}</div>
-      } else {
-        output = <div style={{color:"orange",fontSize:20}}>{response.data}</div>
+      
+      let output;
+      if(response.data.result.entities.length > 0){
+        response.data = response.data.result.entities[0].sentiment.label;
+        this.setState({sentimentOutput:response.data});
+        output = response.data;
+        if(response.data === "positive") {
+          output = <div style={{color:"green",fontSize:20}}>{response.data}</div>
+        } else if (response.data === "negative"){
+          output = <div style={{color:"red",fontSize:20}}>{response.data}</div>
+        } else {
+          output = <div style={{color:"orange",fontSize:20}}>{response.data}</div>
+        }
+      }else{
+        output = <div style={{fontSize:20}}>No Result.</div>
       }
       this.setState({sentimentOutput:output});
     });
@@ -65,6 +70,8 @@ class App extends React.Component {
     this.setState({sentiment:false});
     let ret = "";
     let url = ".";
+    //let url = "http://localhost:8080";
+    
     if(this.state.mode === "url") {
       url = url+"/url/emotion?url="+document.getElementById("textinput").value;
     } else {
@@ -73,7 +80,16 @@ class App extends React.Component {
     ret = axios.get(url);
 
     ret.then((response)=>{
-      this.setState({sentimentOutput:<EmotionTable emotions={response.data}/>});
+      if(response.data.result.entities.length > 0){
+        if(response.data.result.entities[0].emotion === undefined){
+          response.data = { No: 'Result.'};
+        }else{
+          response.data = response.data.result.entities[0].emotion;
+        }
+      }else{
+        response.data = { No: 'Result.'};
+      }
+      this.setState({sentimentOutput:<EmotionTable emotions={[response.data]}/>});
   });
   }
   
